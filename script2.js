@@ -1,4 +1,4 @@
-// ==================== STUDY AI 4.7 - SISTEMA DE REVISÃO COM ANÁLISE GRANULAR + PESO POR DISCIPLINA ====================
+// ==================== STUDY AI 4.8 - SISTEMA DE REVISÃO COM ANÁLISE GRANULAR + CLICKABLE TABLE + DELETE ====================
 
 // Sistema principal
 const StudySystem = {
@@ -31,7 +31,7 @@ const StudySystem = {
 
     // Inicialização
     async initialize() {
-        console.log('🚀 STUDY AI 4.7 - Sistema com Análise Granular Inicializando...');
+        console.log('🚀 STUDY AI 4.8 - Sistema com Análise Granular Inicializando...');
         
         try {
             // Garantir que data.disciplines existe
@@ -58,7 +58,7 @@ const StudySystem = {
             // Renderizar dashboard de desempenho
             this.renderPerformanceDashboard();
             
-            console.log('✅ Sistema 4.7 inicializado com sucesso!');
+            console.log('✅ Sistema 4.8 inicializado com sucesso!');
             console.log(`📊 ${this.data.disciplines.length} disciplinas carregadas`);
             
         } catch (error) {
@@ -206,7 +206,7 @@ const StudySystem = {
 
     // Carregar disciplinas padrão
     async loadDefaultDisciplines() {
-        console.log('📚 Carregando disciplinas padrão 4.7...');
+        console.log('📚 Carregando disciplinas padrão 4.8...');
         
         // Usar diretamente os dados embutidos
         this.data.disciplines = this.getEmbeddedDefaultDisciplines();
@@ -214,7 +214,7 @@ const StudySystem = {
         console.log('✅ Disciplinas padrão carregadas');
     },
 
-    // Dados padrão embutidos - VERSÃO 4.7 COM PESOS E ANÁLISE GRANULAR
+    // Dados padrão embutidos - VERSÃO 4.8 COM PESOS E ANÁLISE GRANULAR
     getEmbeddedDefaultDisciplines() {
         const today = new Date();
         const tomorrow = new Date(today);
@@ -356,7 +356,7 @@ const StudySystem = {
         ];
     },
 
-    // Configurar event listeners - ATUALIZADO PARA 4.7
+    // Configurar event listeners - ATUALIZADO PARA 4.8
     setupEventListeners() {
         // Formulário de adição de disciplina
         const addForm = document.getElementById('add-discipline-form');
@@ -484,8 +484,7 @@ const StudySystem = {
         document.getElementById('page-info').textContent = `Página ${this.config.currentPage} de ${totalPages}`;
     },
 
-    // Renderizar tabela de disciplinas (nova função do 4.6)
-   // Renderizar tabela de disciplinas (atualizada para versão 4.8)
+    // Renderizar tabela de disciplinas (atualizada para 4.8)
     renderDisciplinesTable() {
         const container = document.getElementById('disciplines-container');
         if (!container) return;
@@ -528,23 +527,20 @@ const StudySystem = {
                 rowClass = 'priority-medium';
             }
 
-            // ID único para a linha para evitar conflitos de eventos
-            const rowId = `discipline-row-${discipline.id}`;
-            
             html += `
-                <div class="table-row ${rowClass}" id="${rowId}" style="cursor: pointer;">
-                    <div class="table-cell" onclick="event.stopPropagation();">
+                <div class="table-row ${rowClass}" onclick="StudySystem.openDisciplineCard('${discipline.id}')" style="cursor: pointer;">
+                    <div class="table-cell">
                         <div class="discipline-name-cell">
                             <div class="color-dot" style="background: ${discipline.color};"></div>
                             <strong>${discipline.name}</strong>
                         </div>
                     </div>
-                    <div class="table-cell" onclick="event.stopPropagation();">
+                    <div class="table-cell">
                         <span class="weight-badge weight-${discipline.weight >= 15 ? 'high' : discipline.weight >= 10 ? 'medium' : 'low'}">
                             ${discipline.weight}
                         </span>
                     </div>
-                    <div class="table-cell" onclick="event.stopPropagation();">
+                    <div class="table-cell">
                         <div class="progress-cell">
                             <div class="mini-progress-bar">
                                 <div class="mini-progress-fill" style="width: ${discipline.progress}%; background: ${discipline.color};"></div>
@@ -552,12 +548,12 @@ const StudySystem = {
                             <span>${discipline.progress}%</span>
                         </div>
                     </div>
-                    <div class="table-cell" onclick="event.stopPropagation();">
+                    <div class="table-cell">
                         <span class="performance-badge ${this.getPerformanceClass(avgScore)}">
                             ${avgScore}%
                         </span>
                     </div>
-                    <div class="table-cell" onclick="event.stopPropagation();">
+                    <div class="table-cell">
                         ${weakTopics.length > 0 ? 
                             `<div class="weak-topics-list">
                                 ${weakTopics.slice(0, 2).map(topic => `
@@ -568,17 +564,17 @@ const StudySystem = {
                             '<span class="no-weak-topics">✓ Nenhum</span>'
                         }
                     </div>
-                    <div class="table-cell" onclick="event.stopPropagation();">
+                    <div class="table-cell">
                         <div class="table-actions">
                             ${weakTopics.length > 0 ? `
-                                <button class="btn btn-warning btn-small" onclick="StudySystem.focusOnWeakTopics('${discipline.id}')">
+                                <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); StudySystem.focusOnWeakTopics('${discipline.id}')">
                                     <i class="fas fa-bullseye"></i> Focar
                                 </button>
                             ` : ''}
-                            <button class="btn btn-outline btn-small" onclick="StudySystem.openTopicAnalysis('${discipline.id}')">
+                            <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); StudySystem.openTopicAnalysis('${discipline.id}')">
                                 <i class="fas fa-chart-pie"></i> Análise
                             </button>
-                            <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); StudySystem.deleteDiscipline('${discipline.id}')" style="margin-top: 5px; width: 100%;">
+                            <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); StudySystem.deleteDiscipline('${discipline.id}')">
                                 <i class="fas fa-trash"></i> Excluir
                             </button>
                         </div>
@@ -590,26 +586,10 @@ const StudySystem = {
         html += `</div>`;
         container.innerHTML = html;
 
-        // Adicionar evento de clique para cada linha da tabela
-        filteredDisciplines.forEach(discipline => {
-            const rowElement = document.getElementById(`discipline-row-${discipline.id}`);
-            if (rowElement) {
-                rowElement.addEventListener('click', (e) => {
-                    // Verificar se o clique foi em um elemento que deve impedir a abertura do card
-                    if (!e.target.closest('.table-actions') && 
-                        !e.target.closest('button') && 
-                        !e.target.closest('input') && 
-                        !e.target.closest('select')) {
-                        this.openDisciplineCard(discipline.id);
-                    }
-                });
-            }
-        });
-
         document.getElementById('page-info').textContent = `Mostrando ${filteredDisciplines.length} disciplinas`;
     },
 
-    // Nova função para abrir o card da disciplina (similar ao card view)
+    // Abrir card da disciplina (nova função da 4.8)
     openDisciplineCard(disciplineId) {
         const discipline = this.data.disciplines.find(d => d.id === disciplineId);
         if (!discipline) return;
@@ -618,146 +598,20 @@ const StudySystem = {
         const title = document.getElementById('modal-title');
         const body = document.getElementById('modal-body');
         
-        title.textContent = `Detalhes: ${discipline.name}`;
+        title.textContent = `Card da Disciplina: ${discipline.name}`;
         
-        // Criar um card similar ao modo de visualização de cards
-        const completedTasks = discipline.tasks ? discipline.tasks.filter(t => t.completed).length : 0;
-        const totalTasks = discipline.tasks ? discipline.tasks.length : 0;
-        const avgScore = this.calculateDisciplineAverage(discipline);
-        const weakTopics = this.getWeakTopics(discipline);
-        const strongTopics = this.getStrongTopics(discipline);
+        // Usar a mesma função que cria o card, mas em um modal
+        const cardHTML = this.createDisciplineCard(discipline);
         
         body.innerHTML = `
-            <div class="discipline-card-modal" style="border-left-color: ${discipline.color};">
-                <div class="discipline-header">
-                    <div class="discipline-title-row">
-                        <h3 class="discipline-title" style="color: ${discipline.color};">${discipline.name}</h3>
-                        <div class="weight-display">
-                            <span class="weight-label">Peso:</span>
-                            <span class="weight-value ${discipline.weight >= 15 ? 'weight-high' : discipline.weight >= 10 ? 'weight-medium' : 'weight-low'}">
-                                ${discipline.weight}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="discipline-meta">
-                        <span class="review-badge ${discipline.nextReview ? (new Date(discipline.nextReview).toISOString().split('T')[0] === new Date().toISOString().split('T')[0] ? 'today' : 'future') : 'future'}">
-                            ${this.formatDate(discipline.nextReview)}
-                        </span>
-                        ${avgScore > 0 ? `
-                            <span class="performance-badge ${this.getPerformanceClass(avgScore)}">
-                                ${avgScore}%
-                            </span>
-                        ` : ''}
-                        ${weakTopics.length > 0 ? `
-                            <span class="warning-badge">
-                                <i class="fas fa-exclamation-triangle"></i> ${weakTopics.length} tópico(s) crítico(s)
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-                
-                <div class="discipline-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${discipline.progress}%; background: ${discipline.color};"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span>Progresso: ${discipline.progress}%</span>
-                        <span>Desempenho: ${avgScore > 0 ? avgScore + '%' : 'N/A'}</span>
-                    </div>
-                </div>
-                
-                <div class="granular-analysis">
-                    <div class="analysis-header">
-                        <h4><i class="fas fa-search"></i> Análise por Tópico</h4>
-                    </div>
-                    
-                    <div class="analysis-stats">
-                        <div class="stat-item">
-                            <div class="stat-number ${strongTopics.length > 0 ? 'stat-good' : ''}">${strongTopics.length}</div>
-                            <div class="stat-label">Pontos Fortes</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number ${weakTopics.length === 0 ? 'stat-good' : 'stat-warning'}">${weakTopics.length}</div>
-                            <div class="stat-label">Tópicos Críticos</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">${this.calculateDisciplineAverage(discipline)}%</div>
-                            <div class="stat-label">Média</div>
-                        </div>
-                    </div>
-                    
-                    ${weakTopics.length > 0 ? `
-                        <div class="weak-topics-preview">
-                            <div class="preview-header">
-                                <span class="preview-title"><i class="fas fa-exclamation-circle"></i> Tópicos que precisam de atenção:</span>
-                            </div>
-                            <div class="preview-list">
-                                ${weakTopics.slice(0, 3).map(topic => `
-                                    <div class="preview-item">
-                                        <span class="topic-name">${topic.text}</span>
-                                        <span class="topic-score ${this.getPerformanceClass(topic.performance.averageScore)}">
-                                            ${topic.performance.averageScore}%
-                                        </span>
-                                    </div>
-                                `).join('')}
-                                ${weakTopics.length > 3 ? `<div class="more-topics">+${weakTopics.length - 3} mais</div>` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-                
-                <div class="todo-list-container">
-                    <div class="todo-list">
-                        ${discipline.tasks && discipline.tasks.length > 0 ? 
-                            discipline.tasks.slice(0, 5).map(task => `
-                                <div class="todo-item" data-task-id="${task.id}">
-                                    <input type="checkbox" 
-                                        id="task-${task.id}" 
-                                        ${task.completed ? 'checked' : ''}
-                                        onchange="StudySystem.toggleTask('${discipline.id}', '${task.id}')">
-                                    <label for="task-${task.id}" class="${task.completed ? 'completed' : ''}">
-                                        <span class="todo-text">${task.text}</span>
-                                        <span class="todo-performance">
-                                            ${task.performance && task.performance.totalQuestions > 0 ? 
-                                                `<span class="performance-score ${this.getPerformanceClass(task.performance.averageScore)}">
-                                                    ${task.performance.averageScore}%
-                                                </span>` : 
-                                                `<span class="performance-score no-data">0%</span>`
-                                            }
-                                        </span>
-                                    </label>
-                                </div>
-                            `).join('') : 
-                            `<div class="no-tasks">Nenhuma tarefa definida</div>`
-                        }
-                    </div>
-                    
-                    <div class="todo-stats">
-                        <span>${completedTasks} de ${totalTasks} concluídas</span>
-                        <div class="todo-actions">
-                            <button class="btn-text" onclick="StudySystem.openTaskManager('${discipline.id}')">
-                                <i class="fas fa-tasks"></i> Gerenciar Tarefas
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button class="btn btn-primary" onclick="StudySystem.markAsReviewed('${discipline.id}')">
-                        <i class="fas fa-check"></i> Marcar como Revisado
-                    </button>
-                    <button class="btn btn-outline" onclick="StudySystem.recordQuestions('${discipline.id}')">
-                        <i class="fas fa-chart-line"></i> Registrar Questões
-                    </button>
-                    ${weakTopics.length > 0 ? `
-                        <button class="btn btn-warning" onclick="StudySystem.focusOnWeakTopics('${discipline.id}')">
-                            <i class="fas fa-bullseye"></i> Focar nos Fracos
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-danger" onclick="StudySystem.deleteDiscipline('${discipline.id}')">
-                        <i class="fas fa-trash"></i> Excluir Disciplina
-                    </button>
-                </div>
+            <div class="modal-discipline-card">
+                ${cardHTML}
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="StudySystem.markAsReviewed('${discipline.id}')">
+                    <i class="fas fa-check"></i> Marcar como Revisado
+                </button>
             </div>
         `;
         
@@ -952,7 +806,7 @@ const StudySystem = {
         });
     },
 
-    // Criar card de disciplina VERSÃO 4.7 COM ANÁLISE GRANULAR
+    // Criar card de disciplina VERSÃO 4.8 COM ANÁLISE GRANULAR
     createDisciplineCard(discipline) {
         const today = new Date().toISOString().split('T')[0];
         const nextReviewDate = discipline.nextReview ? discipline.nextReview.split('T')[0] : null;
@@ -2807,7 +2661,7 @@ const StudySystem = {
         
         const a = document.createElement('a');
         a.href = url;
-        a.download = `study-ai-v4.7-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `study-ai-v4.8-backup-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3093,7 +2947,7 @@ function resetAllProgress() {
 document.addEventListener('DOMContentLoaded', () => {
     StudySystem.initialize();
     
-    // Adicionar CSS para animações e estilos da versão 4.7
+    // Adicionar CSS para animações e estilos da versão 4.8
     const style = document.createElement('style');
     style.textContent = `
         /* Animações */
@@ -3200,7 +3054,7 @@ document.addEventListener('DOMContentLoaded', () => {
             background: white;
         }
         
-        /* Estilos para modo tabela */
+        /* Estilos para modo tabela - VERSÃO 4.8 */
         .disciplines-table {
             background: white;
             border-radius: 8px;
@@ -3227,7 +3081,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         .table-row:hover {
-            background: var(--gray-50);
+            background-color: rgba(0, 0, 0, 0.03) !important;
         }
         
         .table-row.weight-high {
@@ -3326,7 +3180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         .table-actions {
             display: flex;
-            gap: 0.25rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
         
         /* Estilos para view de tópicos fracos */
@@ -3579,6 +3434,18 @@ document.addEventListener('DOMContentLoaded', () => {
         .priority-strong {
             background: #e3f2fd;
             color: #1565c0;
+        }
+        
+        /* Estilos para modal de card da disciplina V4.8 */
+        .modal-discipline-card {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        /* Para o dark mode */
+        .dark-mode .table-row:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
         }
     `;
     document.head.appendChild(style);
