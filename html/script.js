@@ -335,7 +335,6 @@ const StudySystem = {
         const report = this.createStudyReport();
         this.showNotification('Relatório gerado com sucesso!', 'success');
         console.log('📊 Relatório de Estudos:', report);
-        // Em uma implementação real, aqui você enviaria para um servidor ou geraria PDF
         alert('Relatório gerado no console. Em produção, seria gerado um PDF.');
     },
 
@@ -591,50 +590,275 @@ const StudySystem = {
         }
     },
 
-    // Renderizar interface
-    renderInterface() {
-        if (this.config.viewMode === 'table') {
-            this.renderDisciplinesTable();
-        } else if (this.config.viewMode === 'weak-topics') {
-            this.renderWeakTopicsView();
-        } else if (this.config.viewMode === 'ai-plan') {
-            this.renderAIPlanView();
-        } else {
-            this.renderDisciplines();
-        }
-        
-        this.renderTodayReviews();
-        this.renderCalendar();
-        this.updatePageInfo();
-        this.renderPerformanceDashboard();
-    },
+    // ===== FUNÇÕES DE REGISTRO DE QUESTÕES POR TÓPICO =====
 
-    // Mostrar aba
-    showTab(tabName) {
-        this.config.currentTab = tabName;
-        this.config.currentPage = 1;
+    // 1. Função auxiliar para atualizar resumo da disciplina
+    updateDisciplineSummary(disciplineId) {
+        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
+        if (!discipline || !discipline.tasks) return;
         
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.getElementById(`tab-${tabName}`).classList.add('active');
+        let totalQuestions = 0;
+        let totalCorrect = 0;
         
-        this.renderInterface();
-    },
-
-    // Mudar modo de visualização
-    changeViewMode(mode) {
-        this.config.viewMode = mode;
-        this.config.currentPage = 1;
-        
-        document.querySelectorAll('.view-mode-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.mode === mode) {
-                btn.classList.add('active');
+        discipline.tasks.forEach(task => {
+            if (task.performance) {
+                totalQuestions += task.performance.totalQuestions;
+                totalCorrect += task.performance.correctAnswers;
             }
         });
         
+        const averageScore = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+        
+        const totalEl = document.getElementById('total-discipline-questions');
+        const averageEl = document.getElementById('average-discipline-score');
+        
+        if (totalEl) totalEl.textContent = totalQuestions;
+        if (averageEl) averageEl.textContent = averageScore + '%';
+    },
+
+    // 2. Função principal que chama a auxiliar - CORRIGIDA
+    openQuestionRecordModal(disciplineId) {
+        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
+        if (!discipline) return;
+
+        const modal = document.getElementById('question-record-modal');
+        const title = document.getElementById('question-modal-title');
+        const body = document.getElementById('question-modal-body');
+        
+        title.textContent = `Registrar Questões: ${discipline.name}`;
+        
+        if (!discipline.tasks || discipline.tasks.length === 0) {
+            body.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-tasks"></i>
+                    <h4>Nenhum tópico cadastrado</h4>
+                    <p>Adicione tópicos primeiro para registrar questões.</p>
+                    <button class="btn btn-primary" onclick="StudySystem.openTaskManager('${discipline.id}')">
+                        <i class="fas fa-plus"></i> Adicionar Tópicos
+                    </button>
+                </div>
+            `;
+        } else {
+            body.innerHTML = `
+                <div class="question-record-container">
+                    <div class="record-info">
+                        <p><i class="fas fa-info-circle"></i> Registre suas questões por tópico para uma análise mais precisa</p>
+                    </div>
+                    
+                    <div class="topics-list">
+                        ${discipline.tasks.map(task => `
+                            <div class="topic-record-item">
+                                <div class="topic-info">
+                                    <h4>${task.text}</h4>
+                                    <div class="topic-stats">
+                                        ${task.performance && task.performance.totalQuestions > 0 ? `
+                                            <span class="stat-badge">
+                                                <i class="fas fa-check-circle"></i>
+                                                ${task.performance.correctAnswers}/${task.performance.totalQuestions}
+                                            </span>
+                                            <span class="stat-badge ${StudySystem.getPerformanceClass(task.performance.averageScore)}">
+                                                ${task.performance.averageScore}%
+                                            </span>
+                                        ` : `
+                                            <span class="stat-badge no-data">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                                Sem dados
+                                            </span>
+                                        `}
+                                    </div>
+                                </div>
+                                
+                                <div class="record-form">
+                                    <div class="form-group">
+                                        <label>Total de Questões</label>
+                                        <input type="number" 
+                                            id="total-${task.id}" 
+                                            min="1" 
+                                            max="1000" 
+                                            placeholder="Ex: 20"
+                                            class="question-input">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Questões Acertadas</label>
+                                        <input type="number" 
+                                            id="correct-${task.id}" 
+                                            min="0" 
+                                            max="1000" 
+                                            placeholder="Ex: 15"
+                                            class="question-input">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Data da Realização</label>
+                                        <input type="date" 
+                                            id="date-${task.id}" 
+                                            value="${new Date().toISOString().split('T')[0]}"
+                                            class="question-input">
+                                    </div>
+                                    
+                                    <button class="btn btn-primary btn-small" 
+                                            onclick="StudySystem.saveTopicQuestions('${discipline.id}', '${task.id}')">
+                                        <i class="fas fa-save"></i> Salvar
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="record-summary">
+                        <h4><i class="fas fa-chart-bar"></i> Resumo da Disciplina</h4>
+                        <div class="summary-stats">
+                            <div class="summary-stat">
+                                <div class="stat-value" id="total-discipline-questions">0</div>
+                                <div class="stat-label">Total de Questões</div>
+                            </div>
+                            <div class="summary-stat">
+                                <div class="stat-value" id="average-discipline-score">0%</div>
+                                <div class="stat-label">Média Geral</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // CORREÇÃO: Usar StudySystem explicitamente
+            StudySystem.updateDisciplineSummary(disciplineId);
+        }
+        
+        modal.style.display = 'flex';
+    },
+
+    // 3. Função para salvar questões - CORRIGIDA
+    async saveTopicQuestions(disciplineId, taskId) {
+        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
+        if (!discipline || !discipline.tasks) return;
+
+        const task = discipline.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const totalInput = document.getElementById(`total-${taskId}`);
+        const correctInput = document.getElementById(`correct-${taskId}`);
+        const dateInput = document.getElementById(`date-${taskId}`);
+        
+        const total = parseInt(totalInput.value);
+        const correct = parseInt(correctInput.value);
+        const date = dateInput.value;
+        
+        if (!total || total <= 0) {
+            StudySystem.showNotification('Informe o total de questões realizadas', 'error');
+            totalInput.focus();
+            return;
+        }
+        
+        if (correct === undefined || correct < 0 || correct > total) {
+            StudySystem.showNotification('Número de acertos inválido', 'error');
+            correctInput.focus();
+            return;
+        }
+        
+        const accuracy = Math.round((correct / total) * 100);
+        
+        if (!task.performance) {
+            task.performance = { totalQuestions: 0, correctAnswers: 0, averageScore: 0 };
+        }
+        
+        // Atualizar estatísticas
+        const oldTotal = task.performance.totalQuestions;
+        const oldCorrect = task.performance.correctAnswers;
+        
+        const newTotal = oldTotal + total;
+        const newCorrect = oldCorrect + correct;
+        const newAverage = Math.round((newCorrect / newTotal) * 100);
+        
+        task.performance = {
+            totalQuestions: newTotal,
+            correctAnswers: newCorrect,
+            averageScore: newAverage
+        };
+        
+        // Atualizar confiança baseado no desempenho
+        if (accuracy >= 80) {
+            task.confidenceScore = Math.min(100, (task.confidenceScore || 50) + 15);
+        } else if (accuracy >= 60) {
+            task.confidenceScore = Math.min(100, (task.confidenceScore || 50) + 10);
+        } else if (accuracy >= 40) {
+            task.confidenceScore = Math.max(0, (task.confidenceScore || 50) - 5);
+        } else {
+            task.confidenceScore = Math.max(0, (task.confidenceScore || 50) - 10);
+        }
+        
+        task.lastReviewed = new Date().toISOString();
+        
+        // Registrar no histórico
+        const previousAverage = oldTotal > 0 ? Math.round((oldCorrect / oldTotal) * 100) : 0;
+        
+        this.data.questionHistory.push({
+            type: 'topic',
+            disciplineId,
+            disciplineName: discipline.name,
+            taskId,
+            taskText: task.text,
+            date: date || new Date().toISOString(),
+            totalQuestions: total,
+            correctAnswers: correct,
+            accuracy,
+            previousAverage: previousAverage,
+            newAverage: newAverage
+        });
+        
+        // Recalcular análise inteligente da disciplina
+        discipline.intelligentAnalysis = this.calculateIntelligentAnalysis(discipline);
+        
+        await this.saveData();
+        
+        // Atualizar a interface - CORREÇÃO: Usar StudySystem
+        StudySystem.updateDisciplineSummary(disciplineId);
+        
+        // Renderizar novamente para atualizar os cards
         this.renderInterface();
+        
+        StudySystem.showNotification(`Questões de "${task.text}" registradas: ${correct}/${total} (${accuracy}%)`, 'success');
+        
+        // Limpar campos
+        totalInput.value = '';
+        correctInput.value = '';
+        dateInput.value = new Date().toISOString().split('T')[0];
+    },
+
+    // 4. Função para fechar modal
+    closeQuestionModal() {
+        document.getElementById('question-record-modal').style.display = 'none';
+    },
+
+    // 5. Função para registrar questões da disciplina
+    async recordQuestions(disciplineId) {
+        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
+        if (!discipline) return;
+
+        // Redirecionar para o modal de tópicos
+        this.openQuestionRecordModal(disciplineId);
+        
+        StudySystem.showNotification('Selecione os tópicos específicos para registrar questões', 'info');
+    },
+
+    // 6. Função para registrar questões de tópico específico
+    async recordQuestionsForTopic(disciplineId, topicId) {
+        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
+        if (!discipline) return;
+
+        this.openQuestionRecordModal(disciplineId);
+        
+        // Rolar para o tópico específico
+        setTimeout(() => {
+            const topicInput = document.getElementById(`total-${topicId}`);
+            if (topicInput) {
+                topicInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                topicInput.focus();
+            }
+        }, 500);
+        
+        StudySystem.showNotification('Preencha os dados para este tópico específico', 'info');
     },
 
     // ===== FUNÇÕES DE RENDERIZAÇÃO =====
@@ -679,9 +903,9 @@ const StudySystem = {
         const analysis = discipline.intelligentAnalysis || this.calculateIntelligentAnalysis(discipline);
 
         const isHighPriority = discipline.weight >= 15 || 
-                              (discipline.weight >= 10 && weakTopics.length > 0) ||
-                              analysis.reviewUrgency === 'critical' ||
-                              analysis.reviewUrgency === 'high';
+                            (discipline.weight >= 10 && weakTopics.length > 0) ||
+                            analysis.reviewUrgency === 'critical' ||
+                            analysis.reviewUrgency === 'high';
         
         const cardClass = isHighPriority ? 'discipline-card priority-high fade-in' : 'discipline-card fade-in';
 
@@ -753,15 +977,15 @@ const StudySystem = {
                             discipline.tasks.slice(0, 3).map(task => `
                                 <div class="todo-item" data-task-id="${task.id}">
                                     <input type="checkbox" 
-                                           id="task-${task.id}" 
-                                           ${task.completed ? 'checked' : ''}
-                                           onchange="StudySystem.toggleTask('${discipline.id}', '${task.id}')">
+                                        id="task-${task.id}" 
+                                        ${task.completed ? 'checked' : ''}
+                                        onchange="StudySystem.toggleTask('${discipline.id}', '${task.id}')">
                                     <label for="task-${task.id}" class="${task.completed ? 'completed' : ''}">
                                         <span class="todo-text">${task.text}</span>
                                         <span class="todo-performance">
                                             ${task.performance && task.performance.totalQuestions > 0 ? 
-                                                `<span class="performance-score ${this.getPerformanceClass(task.performance.averageScore)}">
-                                                    ${task.performance.averageScore}%
+                                                `<span class="performance-score ${this.getPerformanceClass(this.calculateTaskScore(task))}">
+                                                    ${this.calculateTaskScore(task)}%
                                                 </span>` : 
                                                 `<span class="performance-score no-data">0%</span>`
                                             }
@@ -779,8 +1003,8 @@ const StudySystem = {
                             <button class="btn-text" onclick="StudySystem.openTaskManager('${discipline.id}')">
                                 <i class="fas fa-tasks"></i> Tarefas
                             </button>
-                            <button class="btn-text" onclick="StudySystem.recordQuestions('${discipline.id}')">
-                                <i class="fas fa-chart-line"></i> Desempenho
+                            <button class="btn-text" onclick="StudySystem.openQuestionRecordModal('${discipline.id}')">
+                                <i class="fas fa-chart-line"></i> Registrar Questões
                             </button>
                         </div>
                     </div>
@@ -788,8 +1012,8 @@ const StudySystem = {
                 
                 <div class="discipline-actions">
                     ${weakTopics.length > 0 ? `
-                        <button class="btn btn-warning btn-small" onclick="StudySystem.focusOnWeakTopics('${discipline.id}')">
-                            <i class="fas fa-bullseye"></i> Focar
+                        <button class="btn btn-warning btn-small" onclick="StudySystem.openQuestionRecordModal('${discipline.id}')">
+                            <i class="fas fa-bullseye"></i> Registrar Questões
                         </button>
                     ` : ''}
                     <button class="btn btn-primary btn-small" onclick="StudySystem.markAsReviewed('${discipline.id}')">
@@ -1356,6 +1580,17 @@ const StudySystem = {
         return Math.round(totalScore / tasksWithQuestions.length);
     },
 
+    // Calcular score de uma tarefa específica
+    calculateTaskScore(task) {
+        if (!task.performance || task.performance.totalQuestions === 0) return 0;
+        
+        const accuracy = Math.round(
+            (task.performance.correctAnswers / task.performance.totalQuestions) * 100
+        );
+        
+        return accuracy;
+    },
+
     // Obter tópicos fracos
     getWeakTopics(discipline) {
         if (!discipline.tasks) return [];
@@ -1887,63 +2122,6 @@ const StudySystem = {
         `;
     },
 
-    // Registrar questões para tópico
-    async recordQuestionsForTopic(disciplineId, topicId) {
-        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
-        if (!discipline || !discipline.tasks) return;
-
-        const topic = discipline.tasks.find(t => t.id === topicId);
-        if (!topic) return;
-
-        const totalQuestions = prompt(`Quantas questões sobre "${topic.text}" você fez?`, "10");
-        if (!totalQuestions || isNaN(totalQuestions)) return;
-
-        const correctAnswers = prompt(`Quantas acertou?`, Math.floor(totalQuestions * 0.7));
-        if (!correctAnswers || isNaN(correctAnswers)) return;
-
-        const total = parseInt(totalQuestions);
-        const correct = parseInt(correctAnswers);
-        const accuracy = Math.round((correct / total) * 100);
-
-        if (!topic.performance) {
-            topic.performance = { totalQuestions: 0, correctAnswers: 0, averageScore: 0 };
-        }
-
-        const oldTotal = topic.performance.totalQuestions;
-        const oldCorrect = topic.performance.correctAnswers;
-        
-        const newTotal = oldTotal + total;
-        const newCorrect = oldCorrect + correct;
-        const newAverage = Math.round((newCorrect / newTotal) * 100);
-
-        topic.performance = {
-            totalQuestions: newTotal,
-            correctAnswers: newCorrect,
-            averageScore: newAverage
-        };
-
-        topic.confidenceScore = Math.min(100, Math.max(0, 
-            topic.confidenceScore + (accuracy >= 80 ? 10 : accuracy >= 60 ? 5 : -5)
-        ));
-
-        this.data.questionHistory.push({
-            disciplineId,
-            disciplineName: discipline.name,
-            topicId,
-            topicText: topic.text,
-            date: new Date().toISOString(),
-            totalQuestions: total,
-            correctAnswers: correct,
-            accuracy
-        });
-
-        await this.saveData();
-        this.renderInterface();
-        this.updateStatistics();
-        
-        this.showNotification(`Questões registradas: ${correct}/${total} (${accuracy}%)`, 'success');
-    },
-
     // Atualizar confiança do tópico
     async updateTopicConfidence(disciplineId, topicId, confidence) {
         const discipline = this.data.disciplines.find(d => d.id === disciplineId);
@@ -2001,35 +2179,6 @@ const StudySystem = {
                 this.showNotification('Continue com a rotina atual', 'success');
                 break;
         }
-    },
-
-    // Registrar questões
-    async recordQuestions(disciplineId) {
-        const discipline = this.data.disciplines.find(d => d.id === disciplineId);
-        if (!discipline) return;
-
-        const totalQuestions = prompt(`Quantas questões sobre ${discipline.name} você fez?`, "20");
-        if (!totalQuestions || isNaN(totalQuestions)) return;
-
-        const correctAnswers = prompt(`Quantas acertou?`, Math.floor(totalQuestions * 0.7));
-        if (!correctAnswers || isNaN(correctAnswers)) return;
-
-        const total = parseInt(totalQuestions);
-        const correct = parseInt(correctAnswers);
-        const accuracy = Math.round((correct / total) * 100);
-
-        this.data.questionHistory.push({
-            disciplineId,
-            disciplineName: discipline.name,
-            date: new Date().toISOString(),
-            totalQuestions: total,
-            correctAnswers: correct,
-            accuracy
-        });
-
-        await this.saveQuestionHistory();
-        
-        this.showNotification(`Questões registradas: ${correct}/${total} (${accuracy}%)`, 'success');
     },
 
     // Alternar tarefa
@@ -2575,449 +2724,47 @@ const StudySystem = {
         localStorage.setItem('studyAI_aiRecommendations', JSON.stringify(this.data.aiRecommendations));
     },
 
-    // ===== MELHORIAS HTML =====
+    // ===== FUNÇÕES FALTANTES =====
 
-    enhanceHTML() {
-        this.addVersionBadge();
-        this.addAIStyles();
+    changeViewMode(mode) {
+        this.config.viewMode = mode;
+        this.renderInterface();
     },
 
-    addVersionBadge() {
-        const logo = document.querySelector('.logo');
-        if (logo && !logo.querySelector('.version-badge')) {
-            const versionBadge = document.createElement('span');
-            versionBadge.className = 'version-badge';
-            versionBadge.textContent = 'v5.0';
-            logo.appendChild(versionBadge);
+    renderInterface() {
+        switch (this.config.viewMode) {
+            case 'cards':
+                this.renderDisciplines();
+                break;
+            case 'table':
+                this.renderDisciplinesTable();
+                break;
+            case 'weak-topics':
+                this.renderWeakTopicsView();
+                break;
+            case 'ai-plan':
+                this.renderAIPlanView();
+                break;
+            default:
+                this.renderDisciplines();
         }
+        
+        this.renderTodayReviews();
+        this.renderCalendar();
+        this.renderPerformanceDashboard();
+        this.generateAIRecommendations();
     },
 
-    addAIStyles() {
-        const existingStyles = document.querySelector('#ai-styles');
-        if (existingStyles) return;
-
-        const styles = `
-            .version-badge {
-                background: linear-gradient(45deg, #9c27b0, #673ab7);
-                color: white;
-                padding: 0.1rem 0.5rem;
-                border-radius: 10px;
-                font-size: 0.7rem;
-                font-weight: bold;
-                margin-left: 0.5rem;
-                animation: pulse 2s infinite;
-            }
-            
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-                100% { transform: scale(1); }
-            }
-            
-            .ai-recommendation {
-                background: rgba(156, 39, 176, 0.1);
-                border: 1px solid rgba(156, 39, 176, 0.2);
-                border-radius: 8px;
-                padding: 0.75rem;
-                margin-top: 1rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #9c27b0;
-                font-size: 0.9rem;
-                animation: slideIn 0.3s ease;
-            }
-            
-            .confidence-badge {
-                padding: 0.1rem 0.5rem;
-                border-radius: 10px;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: white;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.25rem;
-            }
-            
-            .priority-badge-high {
-                position: absolute;
-                top: 10px;
-                right: -25px;
-                background: linear-gradient(45deg, #ff4081, #9c27b0);
-                color: white;
-                padding: 0.2rem 2rem;
-                transform: rotate(45deg);
-                font-size: 0.7rem;
-                font-weight: bold;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                animation: priorityPulse 1.5s infinite;
-            }
-            
-            @keyframes priorityPulse {
-                0% { opacity: 0.8; }
-                50% { opacity: 1; }
-                100% { opacity: 0.8; }
-            }
-            
-            .granular-analysis {
-                background: var(--card-bg);
-                border-radius: 8px;
-                padding: 0.75rem;
-                margin: 0.75rem 0;
-                border: 1px solid var(--border-color);
-            }
-            
-            .analysis-header {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                margin-bottom: 0.75rem;
-                color: var(--text-secondary);
-            }
-            
-            .analysis-stats {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.5rem;
-            }
-            
-            .stat-item {
-                text-align: center;
-                padding: 0.5rem;
-                border-radius: 6px;
-                background: var(--hover-bg);
-            }
-            
-            .stat-number {
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: var(--primary);
-            }
-            
-            .stat-label {
-                font-size: 0.75rem;
-                color: var(--text-secondary);
-            }
-            
-            .stat-good {
-                color: var(--success) !important;
-            }
-            
-            .stat-warning {
-                color: var(--warning) !important;
-            }
-            
-            .fade-in {
-                animation: fadeIn 0.5s ease;
-            }
-            
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateX(-10px); }
-                to { opacity: 1; transform: translateX(0); }
-            }
-            
-            .ai-modal .modal-content {
-                max-width: 500px;
-                max-height: 70vh;
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .ai-chat {
-                flex: 1;
-                overflow-y: auto;
-                padding: 1rem;
-                min-height: 200px;
-            }
-            
-            .ai-message {
-                margin-bottom: 0.75rem;
-                padding: 0.75rem;
-                border-radius: 12px;
-                max-width: 85%;
-                word-wrap: break-word;
-                white-space: pre-wrap;
-            }
-            
-            .ai-message-user {
-                background: var(--primary);
-                color: white;
-                margin-left: auto;
-            }
-            
-            .ai-message-assistant {
-                background: var(--hover-bg);
-                color: var(--text-primary);
-                border: 1px solid var(--border-color);
-            }
-            
-            .ai-input {
-                display: flex;
-                gap: 0.5rem;
-                padding: 1rem;
-                border-top: 1px solid var(--border-color);
-                background: var(--card-bg);
-            }
-            
-            .ai-input input {
-                flex: 1;
-                padding: 0.75rem 1rem;
-                border: 1px solid var(--border-color);
-                border-radius: 25px;
-                background: var(--bg-color);
-                color: var(--text-primary);
-                outline: none;
-            }
-            
-            .ai-input input:focus {
-                border-color: var(--primary);
-            }
-            
-            .weak-topic-card {
-                background: var(--card-bg);
-                border: 2px solid var(--warning);
-                border-radius: 12px;
-                padding: 1.25rem;
-                margin-bottom: 1rem;
-                animation: slideIn 0.3s ease;
-            }
-            
-            .weak-topic-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1rem;
-            }
-            
-            .topic-discipline {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-weight: 600;
-            }
-            
-            .weight-badge {
-                background: var(--primary);
-                color: white;
-                padding: 0.1rem 0.5rem;
-                border-radius: 10px;
-                font-size: 0.75rem;
-            }
-            
-            .priority-badge {
-                background: var(--warning);
-                color: white;
-                padding: 0.25rem 0.75rem;
-                border-radius: 15px;
-                font-size: 0.8rem;
-                font-weight: 600;
-            }
-            
-            .topic-stats {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1rem;
-                margin: 1rem 0;
-            }
-            
-            .stat {
-                text-align: center;
-                padding: 0.75rem;
-                border-radius: 8px;
-                background: var(--hover-bg);
-            }
-            
-            .stat-label {
-                display: block;
-                font-size: 0.8rem;
-                color: var(--text-secondary);
-                margin-bottom: 0.25rem;
-            }
-            
-            .stat-value {
-                font-size: 1.1rem;
-                font-weight: bold;
-            }
-            
-            .ai-plan-container {
-                background: var(--card-bg);
-                border-radius: 12px;
-                padding: 1.5rem;
-            }
-            
-            .ai-plan-header {
-                text-align: center;
-                margin-bottom: 2rem;
-            }
-            
-            .ai-plan-stats {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 1rem;
-                margin-bottom: 2rem;
-            }
-            
-            .stat-card {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                padding: 1rem;
-                border-radius: 10px;
-                background: var(--hover-bg);
-            }
-            
-            .stat-icon {
-                font-size: 1.5rem;
-                color: var(--primary);
-            }
-            
-            .stat-content {
-                flex: 1;
-            }
-            
-            .ai-plan-recommendations {
-                margin-bottom: 2rem;
-            }
-            
-            .recommendation {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                padding: 1rem;
-                margin-bottom: 1rem;
-                border-radius: 10px;
-                background: var(--hover-bg);
-            }
-            
-            .recommendation.critical {
-                border-left: 4px solid var(--error);
-            }
-            
-            .recommendation.consistency {
-                border-left: 4px solid var(--warning);
-            }
-            
-            .recommendation.good {
-                border-left: 4px solid var(--success);
-            }
-            
-            .recommendation-content {
-                flex: 1;
-            }
-            
-            .ai-plan-focus {
-                background: rgba(156, 39, 176, 0.1);
-                border-radius: 10px;
-                padding: 1.5rem;
-            }
-            
-            .focus-items {
-                display: grid;
-                gap: 1rem;
-            }
-            
-            .focus-item {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                padding: 1rem;
-                background: var(--card-bg);
-                border-radius: 8px;
-            }
-            
-            .focus-rank {
-                width: 30px;
-                height: 30px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: var(--primary);
-                color: white;
-                border-radius: 50%;
-                font-weight: bold;
-            }
-            
-            .notification {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1rem;
-                max-width: 350px;
-                z-index: 1000;
-                animation: slideInRight 0.3s ease;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-            
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            
-            .notification-success {
-                background: linear-gradient(135deg, #4caf50, #2e7d32);
-            }
-            
-            .notification-error {
-                background: linear-gradient(135deg, #f44336, #c62828);
-            }
-            
-            .notification-warning {
-                background: linear-gradient(135deg, #ff9800, #ef6c00);
-            }
-            
-            .notification-info {
-                background: linear-gradient(135deg, #2196f3, #1565c0);
-            }
-            
-            .notification button {
-                background: none;
-                border: none;
-                color: white;
-                font-size: 1.2rem;
-                cursor: pointer;
-                opacity: 0.7;
-                transition: opacity 0.2s;
-            }
-            
-            .notification button:hover {
-                opacity: 1;
-            }
-            
-            .dark-mode .ai-recommendation {
-                background: rgba(156, 39, 176, 0.2);
-                border-color: rgba(156, 39, 176, 0.3);
-            }
-            
-            .dark-mode .ai-message-assistant {
-                background: var(--card-bg);
-                border-color: var(--border-color);
-            }
-            
-            .dark-mode .weak-topic-card {
-                background: var(--card-bg);
-                border-color: var(--warning);
-            }
-            
-            .dark-mode .ai-plan-focus {
-                background: rgba(156, 39, 176, 0.15);
-            }
-        `;
-
-        const style = document.createElement('style');
-        style.id = 'ai-styles';
-        style.textContent = styles;
-        document.head.appendChild(style);
+    showTab(tabName) {
+        this.config.currentTab = tabName;
+        this.config.currentPage = 1;
+        this.renderInterface();
+        
+        // Atualizar botões ativos
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     }
 };
 
@@ -3035,7 +2782,7 @@ function sortDisciplines() {
     if (sortSelect) StudySystem.config.sortBy = sortSelect.value;
     StudySystem.renderInterface();
 }
-function toggleDarkMode() { StudySystem.toggleDarkMode(); }
+function closeQuestionModal() { StudySystem.closeQuestionModal(); }
 function closeModal() { StudySystem.closeModal(); }
 function closeConfirmModal() { StudySystem.closeConfirmModal(); }
 function exportData() { StudySystem.exportData(); }
@@ -3043,72 +2790,3 @@ function importData() { StudySystem.importData(); }
 function resetAllProgress() { StudySystem.resetAllProgress(); }
 function prevPage() { StudySystem.prevPage(); }
 function nextPage() { StudySystem.nextPage(); }
-
-// Função global para o botão de modo escuro do HTML
-function toggleDarkMode() {
-    StudySystem.toggleDarkMode();
-}
-// ===== FUNÇÕES PARA O GUIA DE PERGUNTAS =====
-
-// Alternar visibilidade do guia
-function toggleGuide() {
-    const guideContent = document.getElementById('guide-content');
-    const toggleBtn = document.querySelector('.guide-toggle i');
-    
-    guideContent.classList.toggle('collapsed');
-    
-    if (guideContent.classList.contains('collapsed')) {
-        toggleBtn.classList.remove('fa-chevron-up');
-        toggleBtn.classList.add('fa-chevron-down');
-    } else {
-        toggleBtn.classList.remove('fa-chevron-down');
-        toggleBtn.classList.add('fa-chevron-up');
-    }
-}
-
-// Usar pergunta do guia
-function useQuestion(element) {
-    const question = element.textContent;
-    StudySystem.openAIAssistant();
-    
-    // Aguardar o modal abrir
-    setTimeout(() => {
-        const aiInput = document.getElementById('ai-message');
-        if (aiInput) {
-            aiInput.value = question;
-            aiInput.focus();
-        }
-    }, 300);
-}
-
-// Usar exemplo prático
-function useExample(element) {
-    const exampleText = element.querySelector('p').textContent;
-    StudySystem.openAIAssistant();
-    
-    // Remover aspas se houver
-    const question = exampleText.replace(/^"|"$/g, '');
-    
-    // Aguardar o modal abrir
-    setTimeout(() => {
-        const aiInput = document.getElementById('ai-message');
-        if (aiInput) {
-            aiInput.value = question;
-            aiInput.focus();
-        }
-    }, 300);
-}
-
-// Adicionar evento para abrir guia colapsado por padrão em telas pequenas
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.innerWidth < 768) {
-        const guideContent = document.getElementById('guide-content');
-        const toggleBtn = document.querySelector('.guide-toggle i');
-        
-        if (guideContent && toggleBtn) {
-            guideContent.classList.add('collapsed');
-            toggleBtn.classList.remove('fa-chevron-up');
-            toggleBtn.classList.add('fa-chevron-down');
-        }
-    }
-});
