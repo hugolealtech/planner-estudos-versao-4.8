@@ -370,7 +370,6 @@ body {
     font-size: 0.9rem;
     color: var(--gray-600);
 }
-
 /* ===== TABS ===== */
 .tabs {
     display: flex;
@@ -380,7 +379,6 @@ body {
     margin-bottom: 1.5rem;
     box-shadow: var(--shadow-sm);
 }
-
 .tab {
     flex: 1;
     padding: 1rem;
@@ -397,16 +395,23 @@ body {
     gap: 0.5rem;
 }
 
-.tab:hover {
+/* Apenas para abas não ativas */
+.tab:not(.active):hover {
     background: var(--gray-50);
     color: var(--primary);
 }
 
+/* Estado ativo */
 .tab.active {
     background: var(--primary);
     color: white;
 }
 
+/* Opcional: se quiser hover na aba ativa */
+.tab.active:hover {
+    background: var(--primary-dark); /* adicione esta cor no :root */
+    color: white;
+}
 /* ===== SEARCH & FILTER ===== */
 .search-filter {
     display: flex;
@@ -574,20 +579,25 @@ body {
     font-weight: 600;
 }
 
-/* ===== CALENDAR ===== */
+/* ===== CORREÇÃO DO CALENDÁRIO ===== */
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
     margin-top: 1rem;
+    width: 100%;
+    min-width: 0; /* Evita overflow */
 }
 
 .calendar-header {
     text-align: center;
     font-weight: 600;
     color: var(--gray-600);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     padding: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .calendar-day {
@@ -598,26 +608,47 @@ body {
     border-radius: var(--border-radius-sm);
     cursor: pointer;
     transition: var(--transition);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-width: 0;
+    padding: 0.25rem;
 }
 
-.calendar-day:hover {
-    background: var(--gray-100);
+/* Garantir que os números dos dias fiquem centralizados */
+.calendar-day span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
+/* Estado vazio para dias sem número */
+.calendar-day.empty {
+    visibility: hidden;
+}
+
+/* Melhorar visual dos estados */
 .calendar-day.today {
-    background: var(--primary);
-    color: white;
+    background: var(--primary) !important;
+    color: white !important;
+    font-weight: bold;
 }
 
 .calendar-day.has-review {
-    background: var(--success);
-    color: white;
+    background: var(--success) !important;
+    color: white !important;
 }
 
 .calendar-day.multiple-reviews {
-    background: var(--warning);
-    color: white;
+    background: var(--warning) !important;
+    color: white !important;
+}
+
+/* Efeito hover mais suave */
+.calendar-day:hover:not(.empty) {
+    background: var(--gray-100);
+    transform: scale(1.05);
 }
 
 /* ===== REVIEWS LIST ===== */

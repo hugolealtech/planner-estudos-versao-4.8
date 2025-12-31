@@ -1,3 +1,4 @@
+<!-- HTML atualizado minimalmente -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -7,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Adicione apenas estes estilos novos */
+        /* Estilos mínimos da versão 5.0 */
         .version-badge {
             background: #9c27b0;
             color: white;
@@ -35,72 +36,6 @@
             background: rgba(156, 39, 176, 0.2);
             border-color: rgba(156, 39, 176, 0.3);
         }
-        
-        /* Estilos do modal AI */
-        .ai-modal .modal-content {
-            max-width: 500px;
-            max-height: 70vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .ai-chat {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        
-        .ai-message {
-            max-width: 85%;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            line-height: 1.4;
-        }
-        
-        .ai-message-user {
-            background: var(--primary);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-        
-        .ai-message-assistant {
-            background: var(--gray-100);
-            color: var(--gray-800);
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-        
-        .ai-input {
-            display: flex;
-            gap: 0.5rem;
-            padding: 1rem;
-            border-top: 1px solid var(--gray-200);
-        }
-        
-        .ai-input input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--gray-300);
-            border-radius: 24px;
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-        
-        .ai-input input:focus {
-            outline: none;
-            border-color: #9c27b0;
-            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
-        }
-        
-        .dark-mode .ai-message-assistant {
-            background: var(--gray-700);
-            color: var(--gray-100);
-        }
     </style>
 </head>
 <body>
@@ -109,28 +44,26 @@
         <div class="header-content">
             <div class="logo">
                 <i class="fas fa-brain"></i>
-                <h1>HUGO JUIZ <span class="version-badge">v5.0</span></h1>
+                <h1>HUGO JUIZ 5.0</h1>
                 <span class="subtitle">Sistema de Revisão Espaçada</span>
+                <span class="version-badge">v5.0</span>
             </div>
             <div class="header-actions">
                 <button class="btn btn-success" onclick="StudySystem.openAIAssistant()">
-                    <i class="fas fa-robot"></i> Assistente AI
+                    <i class="fas fa-robot"></i> Assistente
                 </button>
                 <div class="streak-counter">
                     <i class="fas fa-fire"></i>
                     <span id="streak-days">0</span> dias
                 </div>
                 <button class="btn btn-secondary" onclick="toggleDarkMode()">
-                    <i class="fas fa-moon"></i> Modo Escuro
+                    <i class="fas fa-moon"></i> Escuro
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- O resto do HTML fica EXATAMENTE IGUAL à versão 4.8 -->
-    <!-- Não altere nada abaixo para manter compatibilidade -->
-    
-    <!-- Container principal -->
+    <!-- Container principal (mantido da 4.8) -->
     <div class="container">
         <!-- Sidebar esquerda -->
         <aside class="sidebar">
@@ -165,7 +98,7 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-number" id="high-priority-count">0</div>
-                        <div class="stat-label">Alta Prioridade</div>
+                        <div class="stat-label">Prioritários</div>
                     </div>
                 </div>
                 <!-- Nova seção de recomendações AI -->
@@ -175,17 +108,16 @@
                 </div>
             </div>
 
-            <!-- Formulário de adição de disciplina (MANTIDO IGUAL) -->
+            <!-- Resto do sidebar mantido da 4.8 -->
             <div class="card">
                 <div class="card-header">
                     <h3><i class="fas fa-plus-circle"></i> Adicionar Disciplina</h3>
                 </div>
                 <form id="add-discipline-form" class="discipline-form">
-                    <!-- Mantenha todo o formulário igual -->
+                    <!-- Formulário mantido da 4.8 -->
                 </form>
             </div>
 
-            <!-- Ações rápidas (MANTIDO IGUAL) -->
             <div class="card">
                 <div class="card-header">
                     <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
@@ -204,9 +136,9 @@
             </div>
         </aside>
 
-        <!-- Conteúdo principal (MANTIDO IGUAL) -->
+        <!-- Conteúdo principal mantido da 4.8 -->
         <main class="main-content">
-            <!-- Tabs (MANTIDAS IGUAIS) -->
+            <!-- Tabs mantidas -->
             <div class="tabs">
                 <button class="tab active" onclick="showTab('today')" id="tab-today">
                     <i class="fas fa-calendar-day"></i> Hoje
@@ -220,9 +152,13 @@
                 <button class="tab" onclick="showTab('mastered')" id="tab-mastered">
                     <i class="fas fa-check-circle"></i> Dominadas
                 </button>
+                <!-- Nova tab opcional -->
+                <button class="tab" onclick="showTab('priority')" id="tab-priority">
+                    <i class="fas fa-star"></i> Prioritárias
+                </button>
             </div>
 
-            <!-- Search e filtros (MANTIDOS IGUAIS) -->
+            <!-- Filtros mantidos -->
             <div class="search-filter">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
@@ -238,7 +174,6 @@
                 </select>
             </div>
 
-            <!-- View controls (MANTIDOS IGUAIS) -->
             <div class="view-controls">
                 <div class="view-mode-selector">
                     <button class="view-mode-btn active" data-mode="cards">
@@ -253,12 +188,12 @@
                 </div>
             </div>
 
-            <!-- Container de disciplinas (MANTIDO IGUAL) -->
+            <!-- Container de disciplinas -->
             <div class="disciplines-grid" id="disciplines-container">
                 <!-- Disciplinas carregadas aqui -->
             </div>
 
-            <!-- Paginação (MANTIDA IGUAL) -->
+            <!-- Paginação -->
             <div class="pagination">
                 <button class="btn btn-outline" onclick="prevPage()">
                     <i class="fas fa-chevron-left"></i> Anterior
@@ -269,7 +204,7 @@
                 </button>
             </div>
 
-            <!-- Dashboard (MANTIDO IGUAL) -->
+            <!-- Dashboard mantido -->
             <div class="card performance-dashboard-card">
                 <div class="card-header">
                     <h3><i class="fas fa-chart-line"></i> Dashboard</h3>
@@ -280,7 +215,7 @@
             </div>
         </main>
 
-        <!-- Painel direito (MANTIDO IGUAL) -->
+        <!-- Painel direito mantido -->
         <aside class="right-panel">
             <div class="card">
                 <div class="card-header">
@@ -299,10 +234,20 @@
                     <!-- Calendário -->
                 </div>
             </div>
+
+            <!-- Nova seção de insights AI -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-brain"></i> Insights</h3>
+                </div>
+                <div class="ai-insights" id="ai-insights">
+                    <p><i class="fas fa-lightbulb"></i> Use o Assistente AI para recomendações personalizadas</p>
+                </div>
+            </div>
         </aside>
     </div>
 
-    <!-- Modais existentes (MANTIDOS IGUAIS) -->
+    <!-- Modais mantidos da 4.8 -->
     <div id="discipline-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -329,207 +274,8 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal do Assistente AI -->
-    <div id="ai-assistant-modal" class="modal">
-        <div class="modal-content ai-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-robot"></i> Assistente AI de Estudos</h3>
-                <button class="close-modal" onclick="StudySystem.closeAIModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="ai-chat" id="ai-chat">
-                    <!-- Mensagens do chat aparecerão aqui -->
-                </div>
-                <div class="ai-input">
-                    <input type="text" id="ai-message" placeholder="Pergunte sobre seus estudos..." onkeypress="if(event.key === 'Enter') StudySystem.sendAIMessage()">
-                    <button class="btn btn-primary" onclick="StudySystem.sendAIMessage()">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Modal para Registrar Questões por Tópico -->
-<div id="question-record-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="question-modal-title">Registrar Questões</h3>
-            <button class="close-modal" onclick="closeQuestionModal()">&times;</button>
-        </div>
-        <div class="modal-body" id="question-modal-body">
-            <!-- Conteúdo será carregado aqui -->
-        </div>
-    </div>
-</div>
+    <!-- Novo modal AI (será criado dinamicamente se necessário) -->
 
     <script src="script.js"></script>
 </body>
-<!-- Rodapé com Guia de Perguntas AI -->
-<footer class="footer-guide">
-    <div class="guide-container">
-        <div class="guide-header">
-            <h3><i class="fas fa-robot"></i> Guia de Perguntas para o Assistente AI</h3>
-            <button class="guide-toggle" onclick="toggleGuide()">
-                <i class="fas fa-chevron-up"></i>
-            </button>
-        </div>
-        
-        <div class="guide-content" id="guide-content">
-            <div class="guide-categories">
-                <!-- Categoria 1 -->
-                <div class="category">
-                    <h4><i class="fas fa-chart-line"></i> Análise de Progresso</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">Como está meu progresso geral?</li>
-                        <li onclick="useQuestion(this)">Quais minhas estatísticas atuais?</li>
-                        <li onclick="useQuestion(this)">Como estou de desempenho?</li>
-                        <li onclick="useQuestion(this)">Mostre minha evolução</li>
-                    </ul>
-                </div>
-                
-                <!-- Categoria 2 -->
-                <div class="category">
-                    <h4><i class="fas fa-bullseye"></i> Prioridades de Estudo</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">O que devo estudar hoje?</li>
-                        <li onclick="useQuestion(this)">Quais são minhas prioridades?</li>
-                        <li onclick="useQuestion(this)">Onde devo focar agora?</li>
-                        <li onclick="useQuestion(this)">Quais matérias revisar primeiro?</li>
-                    </ul>
-                </div>
-                
-                <!-- Categoria 3 -->
-                <div class="category">
-                    <h4><i class="fas fa-exclamation-triangle"></i> Áreas de Dificuldade</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">Quais minhas áreas fracas?</li>
-                        <li onclick="useQuestion(this)">Onde tenho mais dificuldade?</li>
-                        <li onclick="useQuestion(this)">Mostre meus pontos críticos</li>
-                        <li onclick="useQuestion(this)">Quais tópicos preciso melhorar?</li>
-                    </ul>
-                </div>
-                
-                <!-- Categoria 4 -->
-                <div class="category">
-                    <h4><i class="fas fa-calendar-alt"></i> Planejamento</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">Crie um plano de estudos</li>
-                        <li onclick="useQuestion(this)">Planeje minha semana</li>
-                        <li onclick="useQuestion(this)">Qual cronograma devo seguir?</li>
-                        <li onclick="useQuestion(this)">Como organizar meu tempo?</li>
-                    </ul>
-                </div>
-                
-                <!-- Categoria 5 -->
-                <div class="category">
-                    <h4><i class="fas fa-book"></i> Disciplinas Específicas</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">Como estou em Direito Civil?</li>
-                        <li onclick="useQuestion(this)">Analise meu desempenho em Constitucional</li>
-                        <li onclick="useQuestion(this)">Preciso melhorar em Português?</li>
-                        <li onclick="useQuestion(this)">Qual meu progresso em Matemática?</li>
-                    </ul>
-                </div>
-                
-                <!-- Categoria 6 -->
-                <div class="category">
-                    <h4><i class="fas fa-lightbulb"></i> Dicas e Técnicas</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">Dê dicas para melhorar</li>
-                        <li onclick="useQuestion(this)">Como estudar mais eficiente?</li>
-                        <li onclick="useQuestion(this)">Técnicas de revisão espaçada</li>
-                        <li onclick="useQuestion(this)">Como memorizar melhor?</li>
-                    </ul>
-                </div>
-                
-                <!-- Categoria 7 -->
-                <div class="category">
-                    <h4><i class="fas fa-question-circle"></i> Uso do Sistema</h4>
-                    <ul class="question-list">
-                        <li onclick="useQuestion(this)">Como usar o Hugo Juiz melhor?</li>
-                        <li onclick="useQuestion(this)">Quais funcionalidades você tem?</li>
-                        <li onclick="useQuestion(this)">Me ensine a usar o sistema</li>
-                        <li onclick="useQuestion(this)">O que você pode fazer por mim?</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- Exemplos Práticos -->
-            <div class="practical-examples">
-                <h4><i class="fas fa-magic"></i> Exemplos Práticos</h4>
-                <div class="examples-grid">
-                    <div class="example-card" onclick="useExample(this)">
-                        <div class="example-icon">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <div class="example-content">
-                            <p>"Tenho prova em 15 dias, me ajude a planejar"</p>
-                            <small>Clique para usar</small>
-                        </div>
-                    </div>
-                    
-                    <div class="example-card" onclick="useExample(this)">
-                        <div class="example-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="example-content">
-                            <p>"Estou com 60% em uma matéria, o que fazer?"</p>
-                            <small>Clique para usar</small>
-                        </div>
-                    </div>
-                    
-                    <div class="example-card" onclick="useExample(this)">
-                        <div class="example-icon">
-                            <i class="fas fa-balance-scale"></i>
-                        </div>
-                        <div class="example-content">
-                            <p>"Quero focar nas matérias com peso maior"</p>
-                            <small>Clique para usar</small>
-                        </div>
-                    </div>
-                    
-                    <div class="example-card" onclick="useExample(this)">
-                        <div class="example-icon">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <div class="example-content">
-                            <p>"Estou desmotivado, me dê um incentivo"</p>
-                            <small>Clique para usar</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Dicas de Uso -->
-            <div class="usage-tips">
-                <h4><i class="fas fa-tips"></i> Dicas para Melhores Respostas</h4>
-                <div class="tips-grid">
-                    <div class="tip">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Seja específico nas perguntas</span>
-                    </div>
-                    <div class="tip">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Mencione o nome da matéria</span>
-                    </div>
-                    <div class="tip">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Informe prazos quando relevante</span>
-                    </div>
-                    <div class="tip">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Use português natural</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="guide-footer">
-            <p>Clique em qualquer pergunta para usar no Assistente AI</p>
-            <button class="btn btn-small btn-primary" onclick="StudySystem.openAIAssistant()">
-                <i class="fas fa-robot"></i> Abrir Assistente AI
-            </button>
-        </div>
-    </div>
-</footer>
 </html>
